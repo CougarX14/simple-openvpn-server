@@ -185,7 +185,7 @@ crl-verify crl.pem
 # also has a small subnet behind his connecting
 # machine, such as 192.168.40.128/255.255.255.248.
 # First, uncomment out these lines:
-client-config-dir ccd
+;client-config-dir ccd
 ;route 192.168.40.128 255.255.255.248
 
 # Then create a file ccd/Thelonious with this line:
@@ -194,6 +194,15 @@ client-config-dir ccd
 # access the VPN.  This example will only work
 # if you are routing, not bridging, i.e. you are
 # using "dev tun" and "server" directives.
+
+# Push routes to the client to allow it
+# to reach other private subnets behind
+# the server.  Remember that these
+# private subnets will also need
+# to know to route the OpenVPN client
+# address pool (10.8.X.0/255.255.255.0)
+# back to the OpenVPN server.
+;push "route 192.168.10.0 255.255.255.0"
  
 # Uncomment this directive to allow different
 # clients to be able to "see" each other.
