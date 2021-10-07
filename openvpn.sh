@@ -202,7 +202,7 @@ crl-verify crl.pem
 # to know to route the OpenVPN client
 # address pool (10.8.X.0/255.255.255.0)
 # back to the OpenVPN server.
-;push "route 192.168.10.0 255.255.255.0"
+;push \"route 192.168.10.0 255.255.255.0\"
  
 # Uncomment this directive to allow different
 # clients to be able to "see" each other.
