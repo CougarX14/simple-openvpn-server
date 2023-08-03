@@ -54,7 +54,7 @@
 	"variables": {
 		"storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
 		"imagePublisher": "Canonical",
-		"imageOffer": "UbuntuServer",
+		"imageOffer": "0001-com-ubuntu-server-jammy",
 		"OSDiskName": "openvpn-vhd",
 		"imageSKU": "22_04-lts",
 		"nicName": "openvpnNic",
