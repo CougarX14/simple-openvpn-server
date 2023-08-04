@@ -59,6 +59,7 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 echo "ADMIN PASSWORD  = ${ADMINPASSWORD}"
+echo "EMAIL  = ${EMAIL}"
 echo "DNS1            = ${DNS1}"
 echo "DNS2            = ${DNS2}"
 echo "HOST            = ${HOST}"
@@ -111,28 +112,48 @@ if [[ -d /etc/openvpn/easy-rsa/ ]]; then
 fi
 # Get easy-rsa
 
-wget -O ~/EasyRSA-3.0.1.tgz "https://github.com/OpenVPN/easy-rsa/releases/download/3.0.1/EasyRSA-3.0.1.tgz"
-tar xzf ~/EasyRSA-3.0.1.tgz -C ~/
-mv ~/EasyRSA-3.0.1/ /etc/openvpn/
-mv /etc/openvpn/EasyRSA-3.0.1/ /etc/openvpn/easy-rsa/
-chown -R root:root /etc/openvpn/easy-rsa/
-rm -rf ~/EasyRSA-3.0.1.tgz
-cd /etc/openvpn/easy-rsa/
+#wget -O ~/EasyRSA-3.0.1.tgz "https://github.com/OpenVPN/easy-rsa/releases/download/3.0.1/EasyRSA-3.0.1.tgz"
+#tar xzf ~/EasyRSA-3.0.1.tgz -C ~/
+#mv ~/EasyRSA-3.0.1/ /etc/openvpn/
+#mv /etc/openvpn/EasyRSA-3.0.1/ /etc/openvpn/easy-rsa/
+#chown -R root:root /etc/openvpn/easy-rsa/
+#rm -rf ~/EasyRSA-3.0.1.tgz
+#cd /etc/openvpn/easy-rsa/
 
 # Create the PKI, set up the CA, the DH params and the server + client certificates
-./easyrsa init-pki
-./easyrsa --batch build-ca nopass
-./easyrsa gen-dh
-./easyrsa build-server-full server nopass
+#./easyrsa init-pki
+#./easyrsa --batch build-ca nopass
+#./easyrsa gen-dh
+#./easyrsa build-server-full server nopass
 
 # ./easyrsa build-client-full $CLIENT nopass
-EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
+#EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
 
 # Move the stuff we need
-cp pki/ca.crt pki/private/ca.key pki/dh.pem pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn
+#cp pki/ca.crt pki/private/ca.key pki/dh.pem pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn
 
 # CRL is read with each client connection, when OpenVPN is dropped to nobody
-chown nobody:$GROUPNAME /etc/openvpn/crl.pem
+#chown nobody:$GROUPNAME /etc/openvpn/crl.pem
+
+
+
+easy_rsa_url='https://github.com/OpenVPN/easy-rsa/releases/download/v3.1.5/EasyRSA-3.1.5.tgz'
+mkdir -p /etc/openvpn/server/easy-rsa/
+{ wget -qO- "$easy_rsa_url" 2>/dev/null || curl -sL "$easy_rsa_url" ; } | tar xz -C /etc/openvpn/server/easy-rsa/ --strip-components 1
+chown -R root:root /etc/openvpn/server/easy-rsa/
+cd /etc/openvpn/server/easy-rsa/
+# Create the PKI, set up the CA and the server and client certificates
+./easyrsa --batch init-pki
+./easyrsa --batch build-ca nopass
+./easyrsa --batch --days=3650 build-server-full server nopass
+#./easyrsa --batch --days=3650 build-client-full "$client" nopass
+./easyrsa --batch --days=3650 gen-crl
+# Move the stuff we need
+cp pki/ca.crt pki/private/ca.key pki/issued/server.crt pki/private/server.key pki/crl.pem /etc/openvpn/server
+# CRL is read with each client connection, while OpenVPN is dropped to nobody
+chown nobody:"$group_name" /etc/openvpn/server/crl.pem
+# Without +x in the directory, OpenVPN can't run a stat() on the CRL file
+chmod o+x /etc/openvpn/server/
 
 # Generate key for tls-auth
 openvpn --genkey --secret /etc/openvpn/ta.key
