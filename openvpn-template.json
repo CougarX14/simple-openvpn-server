@@ -4,6 +4,7 @@
   "parameters": {
     "adminUsername": {
       "type": "string",
+      "defaultValue": "OpenVPNAdmin",
       "metadata": {
         "description": "Username for the Virtual Machine."
       }
@@ -12,6 +13,13 @@
       "type": "securestring",
       "metadata": {
         "description": "Password for the Virtual Machine."
+      }
+    },
+     "vmName": {
+      "type": "string",
+       "defaultValue": "openvpnVM",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
       }
     },
     "sslEmail": {
@@ -70,7 +78,7 @@
     "publicIPAddressName": "openvpnPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "openvpnVM",
+    "vmName": "[parameters('vmName')]",
     "vmSize": "Standard_B1s",
     "virtualNetworkName": "openvpnVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
