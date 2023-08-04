@@ -68,9 +68,10 @@
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "imagePublisher": "Canonical",
     "imageOffer": "0001-com-ubuntu-server-focal",
-    "OSDiskName": "[concat([parameters('vmName')],'-vhd')]",
-    "imageSKU": "20_04-lts-gen2",
     "nicName": "[concat([parameters('vmName')],'-nic')]",
+    "OSDiskName": "[concat([parameters('vmName')],'-vhd')]",
+    "nsgName": "[concat([parameters('vmName')],'-nsg')]",
+    "imageSKU": "20_04-lts-gen2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "[concat([parameters('vmName')],'-subnet')]",
     "subnetPrefix": "10.0.0.0/24",
@@ -136,7 +137,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', 'openvpn-nsg')]"
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -156,7 +157,7 @@
       }
     },
     {
-      "name": "['openvpn-nsg']",
+      "name": "[variables('nsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2016-09-01",
       "location": "[resourceGroup().location]",
