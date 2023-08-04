@@ -329,7 +329,7 @@ chmod g+s /etc/openvpn/easy-rsa/
 
 #Configure the web server with the lighttpd.conf from GitHub
 mv  /etc/nginx/sites-available/default /etc/nginx/sites-available/default.$$
-wget -O /etc/nginx/sites-available/default https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/default
+wget -O /etc/nginx/sites-available/default https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/featureUpdate/default
 
 sed -i "s/server_name  example.com;/server_name  $HOST;/g" /etc/nginx/sites-available/default
 
@@ -337,9 +337,9 @@ sed -i "s/server_name  example.com;/server_name  $HOST;/g" /etc/nginx/sites-avai
 #install the webserver scripts
 rm /var/www/html/*
 mkdir -p /var/www/html/
-wget -O /var/www/html/index.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/index.sh
+wget -O /var/www/html/index.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/featureUpdate/index.sh
 
-wget -O /var/www/html/download.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/download.sh
+wget -O /var/www/html/download.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/featureUpdate/download.sh
 chown -R www-data:www-data /var/www/html/
 chmod +x /var/www/html/*
 
