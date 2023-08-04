@@ -219,7 +219,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[split('https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/featureUpdate/openvpn.sh', ' ')]",
-          "commandToExecute": "[concat('bash openvpn.sh --host=', parameters('dnsNameForPublicIP'), '.', resourceGroup().location, '.cloudapp.azure.com --adminpassword=', parameters('adminPassword'), ' --email=', parameters('sslEmail'))]"
+          "commandToExecute": "[concat('bash openvpn.sh --host=', parameters('dnsNameForPublicIP'), '.', resourceGroup().location, '.cloudapp.azure.com --adminpassword=', parameters('adminPassword'), '--protocol=', parameters('openVpnProtocol'), '--port=', parameters('openVpnPort'), '--network=', parameters('openVpnNetwork'), ' --email=', parameters('sslEmail'))]"
         }
       }
     },
