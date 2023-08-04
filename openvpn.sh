@@ -8,36 +8,63 @@ PROTOCOL=udp
 EMAIL="example@example.com"
 PORT=1194
 HOST=$(wget -4qO- "http://whatismyip.akamai.com/")
+NETWORK="$NETWORK"
 
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
 
-for i in "$@"
-do
-	case $i in
-		--adminpassword=*)
-		ADMINPASSWORD="${i#*=}" 
-		;;
-		--dns1=*)
-		DNS1="${i#*=}"
-		;;
-		--dns2=*)
-		DNS2="${i#*=}"
-		;;
-		--vpnport=*)
-		PORT="${i#*=}"
-		;;
-		--protocol=*)
-		PROTOCOL="${i#*=}"
-		;;
-		--host=*)
-		HOST="${i#*=}"
-		;;
-		--email=*)
-		EMAIL="${i#*=}"
-		;;		
-		*)
-		;;
-	esac
+  case $key in
+    --adminpassword)
+      ADMINPASSWORD="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --dns1)
+      DNS1="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --dns2)
+      DNS2="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --vpnport)
+      PORT="$2"
+      shift # past argument
+      ;;
+	--protocol)
+      PROTOCOL="$2"
+      shift # past argument
+      ;;
+	--host)
+      HOST="$2"
+      shift # past argument
+      ;;
+	--network)
+      NETWORK="$2"
+      shift # past argument
+      ;;
+    --email=*)
+	  EMAIL="${i#*=}"
+	  ;;		
+    *)    # unknown option
+      POSITIONAL+=("$1") # save it in an array for later
+      shift # past argument
+      ;;
+  esac
 done
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+echo "ADMIN PASSWORD  = ${ADMINPASSWORD}"
+echo "DNS1            = ${DNS1}"
+echo "DNS2            = ${DNS2}"
+echo "HOST            = ${HOST}"
+echo "PORT            = ${PORT}"
+echo "PROTOCOL        = ${PROTOCOL}"
+echo "NETWORK         = ${NETWORK}"
 
 [ "${ADMINPASSWORD}" == "secret" ] && echo "fatal: password is not set" && exit 1
 
@@ -99,7 +126,7 @@ cd /etc/openvpn/easy-rsa/
 ./easyrsa build-server-full server nopass
 
 # ./easyrsa build-client-full $CLIENT nopass
-./easyrsa gen-crl
+EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
 
 # Move the stuff we need
 cp pki/ca.crt pki/private/ca.key pki/dh.pem pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn
@@ -122,13 +149,13 @@ key server.key
 dh dh.pem
 tls-auth ta.key 0
 topology subnet
-server 10.8.0.0 255.255.255.0
+server $NETWORK 255.255.255.0
 ifconfig-pool-persist ipp.txt" > /etc/openvpn/server.conf
-echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server.conf
+#echo 'push "redirect-gateway def1 bypass-dhcp"' >> /etc/openvpn/server.conf
 
 # DNS
-echo "push \"dhcp-option DNS $DNS1\"" >> /etc/openvpn/server.conf
-echo "push \"dhcp-option DNS $DNS2\"" >> /etc/openvpn/server.conf
+#echo "push \"dhcp-option DNS $DNS1\"" >> /etc/openvpn/server.conf
+#echo "push \"dhcp-option DNS $DNS2\"" >> /etc/openvpn/server.conf
 echo "keepalive 10 120
 cipher AES-256-CBC
 
@@ -137,8 +164,42 @@ group $GROUPNAME
 persist-key
 persist-tun
 status openvpn-status.log
-verb 3
-crl-verify crl.pem" >> /etc/openvpn/server.conf
+verb 4
+log openvpn_server.log
+crl-verify crl.pem
+
+
+# EXAMPLE: Suppose the client
+# having the certificate common name "Thelonious"
+# also has a small subnet behind his connecting
+# machine, such as 192.168.40.128/255.255.255.248.
+# First, uncomment out these lines:
+;client-config-dir ccd
+;route 192.168.40.128 255.255.255.248
+
+# Then create a file ccd/Thelonious with this line:
+#   iroute 192.168.40.128 255.255.255.248
+# This will allow Thelonious' private subnet to
+# access the VPN.  This example will only work
+# if you are routing, not bridging, i.e. you are
+# using "dev tun" and "server" directives.
+
+# Push routes to the client to allow it
+# to reach other private subnets behind
+# the server.  Remember that these
+# private subnets will also need
+# to know to route the OpenVPN client
+# address pool (10.8.X.0/255.255.255.0)
+# back to the OpenVPN server.
+;push \"route 192.168.10.0 255.255.255.0\"
+ 
+# Uncomment this directive to allow different
+# clients to be able to "see" each other.
+# By default, clients will only see the server.
+# To force clients to only see the server, you
+# will also need to appropriately firewall the
+# server's TUN/TAP interface.
+client-to-client" >> /etc/openvpn/server.conf
 
 # Enable net.ipv4.ip_forward for the system
 sed -i '/\<net.ipv4.ip_forward\>/c\net.ipv4.ip_forward=1' /etc/sysctl.conf
@@ -154,12 +215,12 @@ if pgrep firewalld; then
 	# We don't use --add-service=openvpn because that would only work with
 	# the default port and protocol.
 	firewall-cmd --zone=public --add-port=$PORT/$PROTOCOL
-	firewall-cmd --zone=trusted --add-source=10.8.0.0/24
+	firewall-cmd --zone=trusted --add-source=$NETWORK/24
 	firewall-cmd --permanent --zone=public --add-port=$PORT/$PROTOCOL
-	firewall-cmd --permanent --zone=trusted --add-source=10.8.0.0/24
+	firewall-cmd --permanent --zone=trusted --add-source=$NETWORK/24
 	# Set NAT for the VPN subnet
-	firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -s 10.8.0.0/24 -j SNAT --to $IP
-	firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -s 10.8.0.0/24 -j SNAT --to $IP
+	firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -s $NETWORK/24 -j SNAT --to $IP
+	firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -s $NETWORK/24 -j SNAT --to $IP
 else
 	# Needed to use rc.local with some systemd distros
 	if [[ "$OS" = 'debian' && ! -e $RCLOCAL ]]; then
@@ -168,17 +229,17 @@ exit 0' > $RCLOCAL
 	fi
 	chmod +x $RCLOCAL
 	# Set NAT for the VPN subnet
-	iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -j SNAT --to $IP
-	sed -i "1 a\iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -j SNAT --to $IP" $RCLOCAL
+	iptables -t nat -A POSTROUTING -s $NETWORK/24 -j SNAT --to $IP
+	sed -i "1 a\iptables -t nat -A POSTROUTING -s $NETWORK/24 -j SNAT --to $IP" $RCLOCAL
 	if iptables -L -n | grep -qE '^(REJECT|DROP)'; then
 		# If iptables has at least one REJECT rule, we asume this is needed.
 		# Not the best approach but I can't think of other and this shouldn't
 		# cause problems.
 		iptables -I INPUT -p $PROTOCOL --dport $PORT -j ACCEPT
-		iptables -I FORWARD -s 10.8.0.0/24 -j ACCEPT
+		iptables -I FORWARD -s $NETWORK/24 -j ACCEPT
 		iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 		sed -i "1 a\iptables -I INPUT -p $PROTOCOL --dport $PORT -j ACCEPT" $RCLOCAL
-		sed -i "1 a\iptables -I FORWARD -s 10.8.0.0/24 -j ACCEPT" $RCLOCAL
+		sed -i "1 a\iptables -I FORWARD -s $NETWORK/24 -j ACCEPT" $RCLOCAL
 		sed -i "1 a\iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT" $RCLOCAL
 	fi
 fi
@@ -221,7 +282,6 @@ persist-key
 persist-tun
 remote-cert-tls server
 cipher AES-256-CBC
-setenv opt block-outside-dns
 key-direction 1
 verb 3" > /etc/openvpn/client-common.txt
 
@@ -248,7 +308,7 @@ chmod g+s /etc/openvpn/easy-rsa/
 
 #Configure the web server with the lighttpd.conf from GitHub
 mv  /etc/nginx/sites-available/default /etc/nginx/sites-available/default.$$
-wget -O /etc/nginx/sites-available/default https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/default
+wget -O /etc/nginx/sites-available/default https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/default
 
 sed -i "s/server_name  example.com;/server_name  $HOST;/g" /etc/nginx/sites-available/default
 
@@ -256,9 +316,9 @@ sed -i "s/server_name  example.com;/server_name  $HOST;/g" /etc/nginx/sites-avai
 #install the webserver scripts
 rm /var/www/html/*
 mkdir -p /var/www/html/
-wget -O /var/www/html/index.sh https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/index.sh
+wget -O /var/www/html/index.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/index.sh
 
-wget -O /var/www/html/download.sh https://raw.githubusercontent.com/theonemule/simple-openvpn-server/master/download.sh
+wget -O /var/www/html/download.sh https://raw.githubusercontent.com/cougarx14/simple-openvpn-server/master/download.sh
 chown -R www-data:www-data /var/www/html/
 chmod +x /var/www/html/*
 
