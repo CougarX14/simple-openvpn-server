@@ -10,38 +10,53 @@ PORT=1194
 HOST=$(wget -4qO- "http://whatismyip.akamai.com/")
 NETWORK="$NETWORK"
 
-
-for i in "$@"
-do
-case $i in
-	--adminpassword=*)
-	ADMINPASSWORD="${i#*=}" 
-	;;
-	--dns1=*)
-	DNS1="${i#*=}"
-	;;
-	--dns2=*)
-	DNS2="${i#*=}"
-	;;
-	--vpnport=*)
-	PORT="${i#*=}"
-	;;
-	--protocol=*)
-	PROTOCOL="${i#*=}"
-	;;
-	--host=*)
-	HOST="${i#*=}"
-	;;
-	--email=*)
-	EMAIL="${i#*=}"
-	;;
-	--network=*)
-	NETWORK="${i#*=}"
-	;;
-	*)
-	;;
-esac
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --adminpassword)
+      ADMINPASSWORD="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --dns1)
+      DNS1="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --dns2)
+      DNS2="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --vpnport)
+      PORT="$2"
+      shift # past argument
+      ;;
+    --protocol)
+      PROTOCOL="$2"
+      shift # past argument
+      ;;
+    --host)
+      HOST="$2"
+      shift # past argument
+      ;;
+    --network)
+      NETWORK="$2"
+      shift # past argument
+      ;;
+    --email)
+      EMAIL="$2"
+      shift # past argument
+      ;;
+    *)    # unknown option
+      POSITIONAL+=("$1") # save it in an array for later
+      shift # past argument
+      ;;
+  esac
 done
+
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
 echo "ADMIN PASSWORD  = ${ADMINPASSWORD}"
 echo "EMAIL  = ${EMAIL}"
