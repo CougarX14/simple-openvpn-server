@@ -350,7 +350,7 @@ htpasswd -b -c /etc/nginx/.htpasswd admin $ADMINPASSWORD
 
 #Obtain a Certificate from Let's Encrypt
 certbot run -d $HOST --agree-tos --nginx -m $EMAIL -n
-systemctl restart apache2
+#systemctl restart apache2
 
 #restart the web server
 systemctl restart nginx
