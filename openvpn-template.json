@@ -194,7 +194,7 @@
             "properties": {
               "priority": 1200,
               "sourceAddressPrefix": "*",
-              "protocol": "UDP",
+              "protocol": "TCP",
               "destinationPortRange": "443",
               "access": "Allow",
               "direction": "Inbound",
