@@ -70,7 +70,6 @@ echo "NETWORK         = ${NETWORK}"
 
 [ "${ADMINPASSWORD}" == "secret" ] && echo "fatal: password is not set" && exit 1
 
-exit 1
 # Detect Debian users running the script with "sh" instead of bash
 if readlink /proc/$$/exe | grep -qs "dash"; then
 	echo "This script needs to be run with bash, not sh"
