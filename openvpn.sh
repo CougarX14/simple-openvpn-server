@@ -103,7 +103,10 @@ if [[ "$IP" = "" ]]; then
 	IP=$(wget -4qO- "http://whatismyip.akamai.com/")
 fi
 
-
+apt-get clean
+mv /var/lib/apt/lists /tmp
+mkdir -p /var/lib/apt/lists/partial
+apt-get clean
 apt-get update
 apt-get install openvpn iptables openssl fcgiwrap ca-certificates certbot python3-certbot-nginx apache2-utils nginx -y
 
