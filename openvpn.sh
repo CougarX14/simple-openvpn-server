@@ -142,10 +142,10 @@ fi
 
 
 easy_rsa_url='https://github.com/OpenVPN/easy-rsa/releases/download/v3.1.5/EasyRSA-3.1.5.tgz'
-mkdir -p /etc/openvpn/server/easy-rsa/
-{ wget -qO- "$easy_rsa_url" 2>/dev/null || curl -sL "$easy_rsa_url" ; } | tar xz -C /etc/openvpn/server/easy-rsa/ --strip-components 1
-chown -R root:root /etc/openvpn/server/easy-rsa/
-cd /etc/openvpn/server/easy-rsa/
+mkdir -p /etc/openvpn/easy-rsa/
+{ wget -qO- "$easy_rsa_url" 2>/dev/null || curl -sL "$easy_rsa_url" ; } | tar xz -C /etc/openvpn/easy-rsa/ --strip-components 1
+chown -R root:root /etc/openvpn/easy-rsa/
+cd /etc/openvpn/easy-rsa/
 # Create the PKI, set up the CA and the server and client certificates
 ./easyrsa --batch init-pki
 ./easyrsa --batch build-ca nopass
