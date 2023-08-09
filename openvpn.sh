@@ -103,12 +103,8 @@ if [[ "$IP" = "" ]]; then
 	IP=$(wget -4qO- "http://whatismyip.akamai.com/")
 fi
 
-#apt-get clean
-#mv /var/lib/apt/lists /tmp
-#mkdir -p /var/lib/apt/lists/partial
-#apt-get clean
-apt-get update
-apt-get install openvpn iptables openssl fcgiwrap ca-certificates certbot python3-certbot-nginx apache2-utils nginx -y
+apt update
+apt install openvpn iptables openssl fcgiwrap ca-certificates certbot python3-certbot-nginx apache2-utils nginx -y
 
 # An old version of easy-rsa was available by default in some openvpn packages
 if [[ -d /etc/openvpn/easy-rsa/ ]]; then
@@ -149,6 +145,7 @@ cd /etc/openvpn/easy-rsa/
 # Create the PKI, set up the CA and the server and client certificates
 ./easyrsa --batch init-pki
 ./easyrsa --batch build-ca nopass
+./easyrsa gen-dh
 ./easyrsa --batch --days=3650 build-server-full server nopass
 #./easyrsa --batch --days=3650 build-client-full "$client" nopass
 ./easyrsa --batch --days=3650 gen-crl
