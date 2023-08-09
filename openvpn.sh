@@ -151,7 +151,7 @@ cd /etc/openvpn/easy-rsa/
 #./easyrsa --batch --days=3650 build-client-full "$client" nopass
 ./easyrsa --batch --days=3650 gen-crl
 # Move the stuff we need
-cp pki/ca.crt pki/private/ca.key pki/issued/server.crt pki/private/server.key pki/crl.pem /etc/openvpn/server
+cp pki/ca.crt pki/private/ca.key pki/dh.pem pki/issued/server.crt pki/private/server.key pki/crl.pem /etc/openvpn
 # CRL is read with each client connection, while OpenVPN is dropped to nobody
 chown nobody:"$group_name" /etc/openvpn/server/crl.pem
 # Without +x in the directory, OpenVPN can't run a stat() on the CRL file
