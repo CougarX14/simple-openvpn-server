@@ -103,8 +103,9 @@ if [[ "$IP" = "" ]]; then
 	IP=$(wget -4qO- "http://whatismyip.akamai.com/")
 fi
 
-apt update
-apt install openvpn iptables openssl fcgiwrap ca-certificates certbot python3-certbot-nginx apache2-utils nginx -y
+apt-get update
+apt-get update
+apt-get install openvpn iptables openssl fcgiwrap ca-certificates certbot python3-certbot-nginx apache2-utils nginx -y
 
 # An old version of easy-rsa was available by default in some openvpn packages
 if [[ -d /etc/openvpn/easy-rsa/ ]]; then
